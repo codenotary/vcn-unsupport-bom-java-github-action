@@ -1,0 +1,32 @@
+name: 'VCN Unsupport BoM for Java (Maven) projects'
+description: 'Uses the vcn tool from CodeNotary.com to unsupport assets and bill of materials (BoM) for Java (Maven) projects.'
+branding:
+  icon: 'lock'
+  color: 'green'
+inputs:
+  asset:
+    description: 'Asset to unsupport.'
+    required: true
+  cnil_host:
+    description: 'CodeNotary Immutable Ledger (CNIL) host.'
+    required: true
+  cnil_grpc_port:
+    description: 'CNIL gRPC port.'
+    required: false
+    default: 443
+  cnil_api_key:
+    description: 'CNIL API key.'
+    required: true
+runs:
+  using: 'docker'
+  image: 'docker://codenotary/vcn:bom-maven'
+  args:
+    - unsupport
+    - ${{ inputs.asset }}
+    - --lc-host
+    - ${{ inputs.cnil_host }}
+    - --lc-port
+    - ${{ inputs.cnil_grpc_port }}
+    - --lc-api-key
+    - ${{ inputs.cnil_api_key }}
+    - --bom

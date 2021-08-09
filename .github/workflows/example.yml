@@ -1,0 +1,66 @@
+name: unsupport-project-bom
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  unsupport-java-project-with-bom:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 16
+        uses: actions/setup-java@v2
+        with:
+          java-version: '16'
+          distribution: 'adopt'
+
+      - name: Compile project using Maven
+        run: mvn --batch-mode --update-snapshots compile
+
+      - name: unsupport Java Maven project with BoM
+        # This 'env' block is necessary because github actions will try to pass the current variables for JAVA_HOME and JDK_HOME to the container
+        # only include this if your workflow uses the 'setup-java' actions or sets those environment varialbes (JAVA_HOME, PATH)
+        env:
+           JAVA_HOME: /usr/local/openjdk-17
+           PATH: /usr/local/openjdk-17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        #--> Run the GitHub action
+        # uses: codenotary/vcn-unsupport-bom-java-github-action@v1.0.0
+        uses: codenotary/vcn-unsupport-bom-java-github-action@main
+        with:
+          asset: git://.
+          cnil_host: ${{ secrets.CNIL_HOST }}
+          cnil_grpc_port: ${{ secrets.CNIL_GRPC_PORT }}
+          cnil_api_key: ${{ secrets.CNIL_API_KEY }}
+        #<--
+        #--> or run the vcn Docker image directly (all vcn flags are available and passed through)
+        # uses: docker://codenotary/vcn:bom-maven
+        # with:
+        #   args: n git://. --lc-host ${{ secrets.CNIL_HOST }} --lc-port ${{ secrets.CNIL_GRPC_PORT }} --lc-api-key ${{ secrets.CNIL_API_KEY }} --bom
+        #<--
+
+      - name: Build JAR using Maven
+        run: mvn --batch-mode --update-snapshots verify
+
+      - name: unsupport JAR with BoM
+        # This 'env' block is necessary because github actions will try to pass the current variables for JAVA_HOME and JDK_HOME to the container
+        # only include this if your workflow uses the 'setup-java' actions or sets those environment varialbes (JAVA_HOME, PATH)
+        env:
+           JAVA_HOME: /usr/local/openjdk-17
+           PATH: /usr/local/openjdk-17/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        #--> Run the GitHub action
+        # uses: codenotary/vcn-unsupport-bom-java-github-action@v1.0.0
+        uses: codenotary/vcn-unsupport-bom-java-github-action@main
+        with:
+          asset: target/codenotary-hello-world-maven-0.1.0.jar
+          cnil_host: ${{ secrets.CNIL_HOST }}
+          cnil_grpc_port: ${{ secrets.CNIL_GRPC_PORT }}
+          cnil_api_key: ${{ secrets.CNIL_API_KEY }}
+        #<--
+        #--> or run the vcn Docker image directly (all vcn flags are available and passed through)
+        # uses: docker://codenotary/vcn:bom-maven
+        # with:
+        #   args: n target/codenotary-hello-world-maven-0.1.0.jar --lc-host ${{ secrets.CNIL_HOST }} --lc-port ${{ secrets.CNIL_GRPC_PORT }} --lc-api-key ${{ secrets.CNIL_API_KEY }} --bom
+        #<--
